@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "C: drive cleanup",
+    "description": "Cleans C: on a schedule: weekdays at 21:00 and weekends at 02:00 it removes temp files, browser caches, the recycle bin and crash dumps, cache files only. A desktop shortcut cleans on demand."
+  }
+}

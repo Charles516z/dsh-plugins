@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+.voice-speaker.json
+.dsh-win-pronounce.json

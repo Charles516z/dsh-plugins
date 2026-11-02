@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Voice output",
+    "description": "Adds a speaker button beside the composer permission control. When switched on, the assistant can read short messages aloud through the Windows voices installed on this PC, and the voice, speed and volume are switchable in its popover."
+  }
+}

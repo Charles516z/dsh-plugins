@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Morning context compaction">
+  <defs>
+    <linearGradient id="dial" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="30" r="19" fill="none" stroke="url(#dial)" stroke-width="4"/>
+  <path d="M32 19v11l7 5" fill="none" stroke="url(#dial)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18 54h10m8 0h10" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+  <path d="M27 49l5 5 5-5" fill="none" stroke="#6366f1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

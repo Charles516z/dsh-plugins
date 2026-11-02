@@ -1,0 +1,46 @@
+﻿{
+  "name": "dsh-autocompress",
+  "version": "1.0.0",
+  "description": "Scheduled context compaction for DeepSeek Harness: compress every idle session at a fixed time each morning, catch up on the next launch, or run /compact-all on demand.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Charles516z",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Charles516z/dsh-autocompress.git"
+  },
+  "homepage": "https://github.com/Charles516z/dsh-autocompress#readme",
+  "bugs": {
+    "url": "https://github.com/Charles516z/dsh-autocompress/issues"
+  },
+  "icon": "icon.svg",
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "compaction",
+    "context",
+    "scheduler"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "b9cb0b3f-f5ae-4359-9d4a-2a5a5d314f8f",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "E:\\Deepseek Harness\\插件创造\\.archify\\workflow-auto-compact-20261102-113437\\candidate.json",
+  "output": "E:\\Deepseek Harness\\插件创造\\.archify\\workflow-auto-compact-20261102-113437\\auto-compact.html",
+  "specification": {
+    "sha256": "26ef9f746f8266ccaa38e4020f0e2cee933b7a4a9ba220d47b992cc6672d7a3a",
+    "bytes": 4136
+  },
+  "artifact": {
+    "sha256": "f4d6180723c83b313c68244bc706a93e9fdfa322f4e7eb9ca9239f4f8c1fa5d1",
+    "bytes": 760583
+  }
+}

@@ -1,0 +1,12 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Voice output">
+  <defs>
+    <linearGradient id="vsBg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B8DFF"/>
+      <stop offset="1" stop-color="#7C4DFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#vsBg)"/>
+  <path d="M28 20.5 20.8 26.6H14.6v10.8h6.2L28 43.5z" fill="#FFFFFF" fill-opacity="0.96"/>
+  <path d="M34.4 25.6a9 9 0 0 1 0 12.8" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M40 21.2a16 16 0 0 1 0 21.6" stroke="#FFFFFF" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round"/>
+</svg>

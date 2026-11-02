@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "auto-compact 定时压缩系统",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-auto-compact-20261102-113437/auto-compact.html"
+  },
+  "lanes": [
+    { "id": "trigger", "label": "触发入口" },
+    { "id": "plugin", "label": "auto-compact 插件" },
+    { "id": "runtime", "label": "DSH 会话运行时" },
+    { "id": "engine", "label": "压缩引擎" }
+  ],
+  "phases": [
+    { "id": "enter", "label": "进入一轮", "fromCol": 0, "toCol": 1 },
+    { "id": "session", "label": "逐会话压缩", "fromCol": 2, "toCol": 5, "variant": "emphasis" }
+  ],
+  "nodes": [
+    { "id": "sched", "lane": "trigger", "col": 0, "type": "backend", "icon": "clock", "label": "每天 08:30", "sublabel": "到点或启动补压", "yOffset": -55, "width": 150 },
+    { "id": "manual", "lane": "trigger", "col": 0, "type": "frontend", "icon": "person", "label": "/compact-all", "sublabel": "手动立即执行", "yOffset": 55, "width": 150 },
+    { "id": "entry", "lane": "plugin", "col": 1, "type": "backend", "icon": "flag", "label": "启动一轮压缩", "sublabel": "run(trigger)", "width": 150 },
+    { "id": "iterate", "lane": "plugin", "col": 2, "type": "messagebus", "label": "遍历存活会话", "sublabel": "agents.list() 逐个", "width": 150 },
+    { "id": "retry", "lane": "plugin", "col": 3, "type": "security", "icon": "waiting", "label": "延后重试", "sublabel": "10 分钟 × 最多 2 次", "width": 150 },
+    { "id": "idle", "lane": "runtime", "col": 3, "type": "security", "icon": "active", "label": "空闲检查", "sublabel": "status ≠ idle → busy", "width": 150 },
+    { "id": "svc", "lane": "runtime", "col": 4, "type": "backend", "label": "解析压缩服务", "sublabel": "preset 实例 → 宿主回退", "width": 160 },
+    { "id": "compact", "lane": "engine", "col": 5, "type": "backend", "label": "compactNow", "sublabel": "选区间 → 摘要 → 写回", "width": 160 },
+    { "id": "report", "lane": "plugin", "col": 5, "type": "database", "icon": "database", "label": "汇总并写状态", "sublabel": "记录上次运行结果", "width": 160 }
+  ],
+  "edges": [
+    { "id": "e-sched", "from": "sched", "to": "entry", "label": "到点 / 补压", "variant": "emphasis" },
+    { "id": "e-manual", "from": "manual", "to": "entry", "label": "手动" },
+    { "id": "e-entry", "from": "entry", "to": "iterate" },
+    { "id": "e-next", "from": "iterate", "to": "idle", "label": "逐会话" },
+    { "id": "e-free", "from": "idle", "to": "svc", "label": "空闲" },
+    { "id": "e-busy", "from": "idle", "to": "retry", "label": "非空闲", "variant": "dashed", "role": "error", "route": "straight", "fromSide": "top", "toSide": "bottom" },
+    { "id": "e-svc", "from": "svc", "to": "compact", "label": "服务就绪" },
+    { "id": "e-out", "from": "compact", "to": "report" },
+    { "id": "e-none", "from": "svc", "to": "report", "label": "无服务", "variant": "dashed", "role": "branch" },
+    { "id": "e-again", "from": "retry", "to": "iterate", "label": "稍后重试", "variant": "dashed", "role": "return" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "三个入口，一个执行体",
+      "items": [
+        "08:30 到点 / 当天错过时间后的首次启动补压 / 手动命令，都进同一个 run()",
+        "定时触发先比对 lastRunDay，同一天只跑一次；手动不查重"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "压缩服务不是宿主服务",
+      "items": [
+        "每个会话的 preset 隔离组里才挂 compaction-basic",
+        "先 serviceFor(agent) 取 preset 实例，取不到再退到宿主级 compaction",
+        "两者都没有就记 unavailable，不静默失败"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "只压空闲会话",
+      "items": [
+        "agent.status 不是 idle 就跳过，不打断正在跑的回合",
+        "compactNow 返回 null = 没有可压区间，记为 nothing",
+        "摘要不更小、提交中断等按错误码分类记录"
+      ]
+    }
+  ]
+}

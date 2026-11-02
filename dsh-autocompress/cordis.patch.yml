@@ -1,0 +1,13 @@
+# 定时压缩插件：先确保有一个宿主级 compaction 引擎可用（只手动触发，关掉自动压缩
+# 以免与 billion-context 等外部压缩方案重复），再插入插件自身。
+- id: compaction-basic
+  disabled: false
+  config:
+    auto: false
+- insert:
+    - id: autocompress
+      name: dsh-autocompress
+      config:
+        time: '08:30'
+        catchUp: true
+        target: all

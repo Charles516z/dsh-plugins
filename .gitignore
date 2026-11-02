@@ -1,0 +1,25 @@
+# 依赖
+node_modules/
+
+# 本地工具与下载缓存（含 gh.exe、git 安装包等大文件）
+.tools/
+
+# asar 提取产物
+tools/out/
+
+# 大型数据文件
+*.npy
+canvas_base.npy
+
+# Python
+__pycache__/
+*.pyc
+
+# 插件运行时状态文件
+.voice-speaker.json
+.dsh-win-pronounce.json
+
+# 系统杂物
+.DS_Store
+Thumbs.db
+desktop.ini

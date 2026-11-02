@@ -1,0 +1,64 @@
+{
+  "name": "dsh-win-pronounce",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Speak aloud in DeepSeek Harness with the Windows voices already installed on the machine: one speaker button beside the permission control, SAPI and OneCore voices switchable at runtime. / 用本机 Windows 语音朗读：对话输入栏权限控件右边一枚喇叭键，SAPI 与 OneCore 音源随时切换。",
+  "license": "MIT",
+  "author": "Charles516z",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Charles516z/dsh-win-pronounce.git"
+  },
+  "homepage": "https://github.com/Charles516z/dsh-win-pronounce#readme",
+  "bugs": {
+    "url": "https://github.com/Charles516z/dsh-win-pronounce/issues"
+  },
+  "icon": "icon.svg",
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "tts",
+    "text-to-speech",
+    "speech",
+    "voice",
+    "sapi",
+    "onecore",
+    "windows"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib/util.js",
+    "lib/state.js",
+    "lib/tts.js",
+    "assets/voices.ps1",
+    "assets/speak.ps1",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

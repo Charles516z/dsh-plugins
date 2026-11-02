@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Morning Context Compaction",
+    "description": "Compacts every idle session at 08:30 local time to stay ahead of the token rush; catches up on startup and exposes /compact-all for a manual run."
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@local/voice-speaker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local Windows text-to-speech output: a speaker button beside the composer permission control, switchable Microsoft system voices, and a speak tool the agent can call.",
+  "license": "MIT",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib/util.js",
+    "lib/state.js",
+    "lib/tts.js",
+    "assets/voices.ps1",
+    "assets/speak.ps1",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

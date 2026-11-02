@@ -1,0 +1,3 @@
+- insert:
+    - id: disk-clean
+      name: '@local/disk-clean'
