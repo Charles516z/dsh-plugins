@@ -33,9 +33,11 @@ window.__ModuleLoader__.load({
       title: '语音输出',
       buttonOn: '语音输出已开启，点开可以更换音源',
       buttonOff: '语音输出已关闭，点开可以开启',
-      stateOn: '已开启 · 助手可以朗读简短内容',
+      stateOn: '已开启 · 每轮回复都会朗读',
       stateOff: '已关闭 · 助手完全静音',
       speaking: '正在朗读…',
+      replyLabel: '朗读回复',
+      replyHint: '每轮回答结束后自动朗读内容，代码块和表格会被跳过。',
       voice: '音源',
       rate: '语速',
       volume: '音量',
@@ -53,9 +55,11 @@ window.__ModuleLoader__.load({
       title: 'Voice output',
       buttonOn: 'Voice output is on — open to pick another voice',
       buttonOff: 'Voice output is off — open to switch it on',
-      stateOn: 'On · the assistant may read short lines aloud',
+      stateOn: 'On · every reply is read aloud',
       stateOff: 'Off · the assistant stays silent',
       speaking: 'Speaking…',
+      replyLabel: 'Read replies aloud',
+      replyHint: 'The reply is spoken once each turn ends; code blocks and tables are skipped.',
       voice: 'Voice',
       rate: 'Speed',
       volume: 'Volume',
@@ -98,6 +102,10 @@ window.__ModuleLoader__.load({
       .vs-action:disabled { opacity:.45; cursor:default; }
       .vs-error { color:var(--dsw-alias-state-error-primary); font-size:11.5px; margin:0; word-break:break-word; }
       .vs-note { color:var(--dsw-alias-label-tertiary); font-size:11px; margin:0; }
+      .vs-check { display:flex; align-items:center; gap:6px; color:var(--dsw-alias-label-secondary); font-size:11.5px; cursor:pointer; user-select:none; }
+      .vs-check input { margin:0; accent-color:var(--dsw-alias-brand-primary); cursor:pointer; }
+      .vs-check:has(input:disabled) { opacity:.55; cursor:default; }
+      .vs-reply { display:flex; flex-direction:column; gap:4px; }
     `
 
     let stylesInjected = false
@@ -330,6 +338,7 @@ window.__ModuleLoader__.load({
       )
 
       const enabled = snapshot?.enabled === true
+      const readReplies = snapshot?.readReplies !== false
       const speaking = snapshot?.speaking === true
       const voices = Array.isArray(snapshot?.voices) ? snapshot.voices : []
 
@@ -337,6 +346,14 @@ window.__ModuleLoader__.load({
         const next = !enabled
         setSnapshot((current) => (current ? { ...current, enabled: next } : current))
         void act('/config', { enabled: next }).then((payload) => {
+          if (!payload) void load()
+        })
+      }
+
+      const toggleReadReplies = () => {
+        const next = !readReplies
+        setSnapshot((current) => (current ? { ...current, readReplies: next } : current))
+        void act('/config', { readReplies: next }).then((payload) => {
           if (!payload) void load()
         })
       }
@@ -498,6 +515,22 @@ window.__ModuleLoader__.load({
                   },
                 }),
                 h('span', { className: 'vs-value' }, `${Math.round(Number(volume) * 100)}%`),
+              ),
+              h(
+                'div',
+                { className: 'vs-reply' },
+                h(
+                  'label',
+                  { className: 'vs-check' },
+                  h('input', {
+                    type: 'checkbox',
+                    checked: readReplies,
+                    disabled: busy || !enabled,
+                    onChange: toggleReadReplies,
+                  }),
+                  h('span', null, t('replyLabel')),
+                ),
+                h('p', { className: 'vs-note' }, t('replyHint')),
               ),
               h(
                 'div',

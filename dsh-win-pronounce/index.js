@@ -7,6 +7,7 @@
  * the switch is on.
  */
 import { spawn } from 'node:child_process'
+import { buildUtterances } from './lib/speech.js'
 import { RATE_MAX, RATE_MIN, loadState, normalizeState, saveState } from './lib/state.js'
 import { POWERSHELL, SPEAK_SCRIPT, encodeBase64, listVoices } from './lib/tts.js'
 import { clampNumber } from './lib/util.js'
@@ -18,19 +19,23 @@ const ROUTE_PREFIX = '/dsh-win-pronounce'
 const CSRF_HEADER = 'x-dsh-win-pronounce'
 const BODY_LIMIT = 64 * 1024
 const MAX_SPOKEN_CHARS = 1200
+const REPLY_CHUNK_CHARS = 220
+const REPLY_TOTAL_CHARS = 4000
 
 const VOICE_TOOL_DESCRIPTION = [
-  'Read a short message aloud through the local Windows voice the user switched on',
-  'beside the composer toolbar. Use it for brief spoken lines: a status, a reminder,',
-  'a confirmation, or a one-sentence answer. Keep the text conversational and short,',
-  'do not read code, tables, or whole documents aloud, and do not repeat everything',
-  'you already wrote.',
+  'Say a short line aloud through the local Windows voice the user switched on beside the',
+  'composer toolbar. The closing reply of every turn is already read aloud automatically, so',
+  'use this only for a short extra line that is not part of it: a heads-up before a long task,',
+  'a warning, or a confirmation the user should hear right away. Keep it conversational and',
+  'short; never read code, tables, or whole documents aloud.',
 ].join(' ')
 
 const VOICE_PROMPT = [
-  'Voice output is switched on in the composer toolbar: the user hears what you say.',
-  'When a short sentence helps, call the speak tool with brief conversational text',
-  'instead of only writing it. Never read code, tables, or long documents aloud.',
+  'Voice output is switched on in the composer toolbar: the local Windows voice reads your',
+  'closing reply aloud automatically, so write that reply as something worth hearing — the',
+  'points in plain sentences first, code and tables only after the point is made, and no long',
+  'file dumps. Call the speak tool only for a brief line that is not already in that reply,',
+  'such as a heads-up before a long task; never repeat the reply through it.',
 ].join(' ')
 
 function sendJson(res, status, payload) {
@@ -110,14 +115,20 @@ export function apply(ctx) {
   let toolDispose = null
   let promptDispose = null
 
+  /** Utterances waiting for the current one to finish, in order. */
+  const queue = []
+  /** sessionId -> text of the last assistant message seen in the running turn. */
+  const pendingReplies = new Map()
+
   function snapshot() {
     return {
       ok: true,
       enabled: state.enabled,
+      readReplies: state.readReplies,
       voice: state.voice,
       rate: state.rate,
       volume: state.volume,
-      speaking: active !== null,
+      speaking: active !== null || queue.length > 0,
       voices,
       voiceError,
     }
@@ -172,14 +183,20 @@ export function apply(ctx) {
     return true
   }
 
+  /** Drops whatever was queued and silences the utterance in flight. */
+  function stopAll() {
+    queue.length = 0
+    return stopActive()
+  }
+
   /**
-   * Starts one utterance. Playback is asynchronous on purpose: the tool answer
-   * must not wait for the audio, and the running process is what Stop kills.
+   * Starts one utterance and hands back the child process. Playback is
+   * asynchronous on purpose: neither the tool answer nor the session feed may
+   * wait for the audio, and the running process is what Stop kills.
    */
-  function speakNow(text, force) {
+  function startSpeech(text) {
     const message = String(text ?? '').trim()
     if (message === '') return { ok: false, error: 'there is no text to speak' }
-    if (!state.enabled && force !== true) return { ok: false, error: 'voice output is switched off' }
     const voiceId = resolveVoiceId()
     if (voiceId === '') return { ok: false, error: voiceError || 'no local Windows voice is installed' }
 
@@ -212,10 +229,103 @@ export function apply(ctx) {
     active = child
     const settle = () => {
       if (active === child) active = null
+      pump()
     }
     child.once('exit', settle)
     child.once('error', settle)
-    return { ok: true, voice: voiceId, spoken: clipped }
+    return { ok: true, voice: voiceId, spoken: clipped, child }
+  }
+
+  /** Plays the head of the queue whenever the current utterance has finished. */
+  function pump() {
+    if (active !== null) return
+    if (queue.length === 0) return
+    if (!state.enabled) {
+      queue.length = 0
+      return
+    }
+    const started = startSpeech(queue.shift())
+    if (!started.ok) {
+      queue.length = 0
+      voiceError = started.error
+    }
+  }
+
+  /** Explicit speech (the tool, or the preview button) wins over a queued reply. */
+  function speakNow(text, force) {
+    if (!state.enabled && force !== true) return { ok: false, error: 'voice output is switched off' }
+    queue.length = 0
+    const started = startSpeech(text)
+    if (!started.ok) return started
+    return { ok: true, voice: started.voice, spoken: started.spoken }
+  }
+
+  /** Queues a whole reply, already stripped of markdown and cut into utterances. */
+  function enqueueReply(markdown) {
+    if (!state.enabled || state.readReplies !== true) return
+    const chunks = buildUtterances(markdown, REPLY_CHUNK_CHARS, REPLY_TOTAL_CHARS)
+    if (chunks.length === 0) return
+    queue.length = 0
+    for (const chunk of chunks) queue.push(chunk)
+    pump()
+  }
+
+  /** The visible text of one assistant message; reasoning and tool calls are skipped. */
+  function messageText(message) {
+    const blocks = Array.isArray(message?.content)
+      ? message.content
+      : Array.isArray(message?.blocks)
+        ? message.blocks
+        : []
+    const parts = []
+    for (const block of blocks) {
+      if (block && block.type === 'text' && typeof block.text === 'string' && block.text.trim() !== '') {
+        parts.push(block.text)
+      }
+    }
+    return parts.join('\n\n')
+  }
+
+  /**
+   * Reads the closing reply of every finished turn aloud.
+   *
+   * `assistant/message` events keep the latest text of the running turn; when
+   * that turn ends normally the text is spoken once, chunk by chunk. Subagent
+   * sessions stay silent, and so does an interrupted turn.
+   */
+  function onSessionEvent(session, event) {
+    try {
+      if (!state.enabled || state.readReplies !== true) return
+      if (!session || !event || typeof event?.type !== 'string') return
+      if (session.header?.origin === 'subagent') return
+      const sessionId = String(session.id ?? '')
+      if (sessionId === '') return
+
+      if (event.type === 'turn/start') {
+        pendingReplies.delete(sessionId)
+        return
+      }
+
+      if (event.type === 'assistant/message') {
+        const data = event.data ?? {}
+        if (data.interrupted === true) return
+        const text = messageText(data.message)
+        if (text.trim() === '') return
+        pendingReplies.set(sessionId, text)
+        return
+      }
+
+      if (event.type === 'turn/end') {
+        const text = pendingReplies.get(sessionId)
+        pendingReplies.delete(sessionId)
+        if (typeof text !== 'string' || text.trim() === '') return
+        if (event.data?.reason?.kind !== 'completed') return
+        enqueueReply(text)
+      }
+    } catch (failure) {
+      // A listener that throws would break the append feed; stay silent.
+      voiceError = `the reply reader skipped one turn: ${String(failure?.message ?? failure)}`
+    }
   }
 
   function registerSpeakTool() {
@@ -302,6 +412,23 @@ export function apply(ctx) {
   syncAgentSurface()
 
   ctx.effect(
+    () => {
+      const dispose = ctx.on('session/event', onSessionEvent)
+      return () => {
+        pendingReplies.clear()
+        if (typeof dispose === 'function') {
+          try {
+            dispose()
+          } catch {
+            // Already gone.
+          }
+        }
+      }
+    },
+    'dsh-win-pronounce: reply feed',
+  )
+
+  ctx.effect(
     () => () => {
       if (toolDispose) {
         try {
@@ -319,7 +446,8 @@ export function apply(ctx) {
         }
         promptDispose = null
       }
-      stopActive()
+      pendingReplies.clear()
+      stopAll()
     },
     'dsh-win-pronounce: disposal',
   )
@@ -352,18 +480,26 @@ export function apply(ctx) {
 
     const next = normalizeState(state)
     if (typeof body.enabled === 'boolean') next.enabled = body.enabled
+    if (typeof body.readReplies === 'boolean') next.readReplies = body.readReplies
     if (typeof body.voice === 'string' && body.voice !== '') next.voice = body.voice
     if (body.rate !== undefined) next.rate = clampNumber(body.rate, RATE_MIN, RATE_MAX, next.rate)
     if (body.volume !== undefined) next.volume = clampNumber(body.volume, 0, 1, next.volume)
 
     state.enabled = next.enabled
+    state.readReplies = next.readReplies
     state.voice = next.voice
     state.rate = next.rate
     state.volume = next.volume
     saveState(state)
     syncAgentSurface()
 
-    if (!state.enabled) stopActive()
+    if (!state.enabled) {
+      pendingReplies.clear()
+      stopAll()
+    } else if (state.readReplies !== true) {
+      pendingReplies.clear()
+      queue.length = 0
+    }
     sendJson(res, 200, snapshot())
   }
 
@@ -395,7 +531,7 @@ export function apply(ctx) {
       sendJson(res, 403, { ok: false, error: 'cross-origin request refused' })
       return
     }
-    stopActive()
+    stopAll()
     sendJson(res, 200, snapshot())
   }
 

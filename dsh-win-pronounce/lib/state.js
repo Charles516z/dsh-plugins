@@ -13,6 +13,7 @@ export function normalizeState(raw) {
   return {
     version: 1,
     enabled: source.enabled === true,
+    readReplies: source.readReplies !== false,
     voice: typeof source.voice === 'string' ? source.voice : '',
     rate: clampNumber(source.rate, RATE_MIN, RATE_MAX, 1),
     volume: clampNumber(source.volume, 0, 1, 1),
