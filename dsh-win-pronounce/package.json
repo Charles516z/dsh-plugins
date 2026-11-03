@@ -1,8 +1,8 @@
 {
   "name": "dsh-win-pronounce",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
-  "description": "Speak aloud in DeepSeek Harness with the Windows voices already installed on the machine: one speaker button beside the permission control, SAPI and OneCore voices switchable at runtime, every finished reply read aloud. / 用本机 Windows 语音朗读：对话输入栏权限控件右边一枚喇叭键，SAPI 与 OneCore 音源随时切换，每轮回复自动朗读。",
+  "description": "Speak aloud in DeepSeek Harness with the Windows voices already installed on the machine: one speaker button beside the permission control, SAPI and OneCore voices switchable at runtime, every finished reply read aloud. / 在本机已安装的 Windows 语音上朗读：权限控件右侧一个喇叭按钮，SAPI 与 OneCore 音源随时切换，每轮回复自动朗读。",
   "license": "MIT",
   "author": "Charles516z",
   "repository": {

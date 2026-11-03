@@ -80,7 +80,9 @@ window.__ModuleLoader__.load({
       .vs-btn-on { color:var(--dsw-alias-brand-primary); }
       .vs-btn-on:hover { color:var(--dsw-alias-brand-primary); background:var(--dsw-alias-fill-l2); }
       .vs-ico { width:18px; height:18px; display:block; }
-      .vs-panel { position:fixed; z-index:2147483000; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; padding:12px; border-radius:14px; border:1px solid var(--dsw-alias-border-l2); background:var(--dsw-alias-bg-layer-1); color:var(--dsw-alias-label-primary); box-shadow:0 14px 40px rgba(0,0,0,.22); font-size:12.5px; line-height:1.45; animation:vs-pop-in .12s ease-out; }
+      /* The layer token is translucent on purpose; stacking it three times over the blurred
+         backdrop keeps the theme colour but stops the wallpaper from bleeding through. */
+      .vs-panel { position:fixed; z-index:2147483000; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; padding:12px; border-radius:14px; border:1px solid var(--dsw-alias-border-l2); background:var(--dsw-alias-bg-layer-1); background-image:linear-gradient(var(--dsw-alias-bg-layer-1),var(--dsw-alias-bg-layer-1)),linear-gradient(var(--dsw-alias-bg-layer-1),var(--dsw-alias-bg-layer-1)); -webkit-backdrop-filter:blur(26px) saturate(130%); backdrop-filter:blur(26px) saturate(130%); color:var(--dsw-alias-label-primary); box-shadow:0 18px 46px rgba(0,0,0,.3); font-size:12.5px; line-height:1.45; animation:vs-pop-in .12s ease-out; }
       @keyframes vs-pop-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
       .vs-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
       .vs-title { font-size:13px; font-weight:600; }
